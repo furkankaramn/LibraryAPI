@@ -1,13 +1,19 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using LibraryAPI.Data;
 using LibraryAPI.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.IdentityModel.Tokens;
+using System.Configuration;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Text;
 
 namespace LibraryAPI.Controllers
 {
@@ -15,16 +21,20 @@ namespace LibraryAPI.Controllers
     [ApiController]
     public class MembersController : ControllerBase
     {
+        private readonly IConfiguration _configuration;
         private readonly ApplicationContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly SignInManager<ApplicationUser> _signInManager;
 
-        public MembersController(ApplicationContext context, UserManager<ApplicationUser> userManager)
+        public MembersController(ApplicationContext context, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration)
         {
             _context = context;
             _userManager = userManager;
+            _signInManager = signInManager;
+            _configuration = configuration;
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Worker")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Member>>> GetMembers()
         {
@@ -33,16 +43,38 @@ namespace LibraryAPI.Controllers
                 return NotFound();
             }
 
+
             var members = await _context.Members
                                         .Include(m => m.ApplicationUser)
                                         .ToListAsync();
 
             return Ok(members);
         }
+        [Authorize(Roles = "Worker,Admin")]
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Member>> GetMember(string id)
+        {
+            if (_context.Members == null)
+            {
+                return NotFound();
+            }
+            var member = await _context.Members
+                                       .Include(m => m.ApplicationUser)
+                                       .FirstOrDefaultAsync(m => m.Id == id);
 
+            if (member == null)
+            {
+                return NotFound();
+            }
+
+            return member;
+        }
+
+        // GET: api/Members
         [Authorize(Roles = "Member")]
+
         [HttpGet("Me")]
-        public async Task<ActionResult<Member>> GetMember()
+        public async Task<ActionResult<Member>> Getmember()
         {
             var userName = User.FindFirstValue(ClaimTypes.Name);
 
@@ -63,40 +95,61 @@ namespace LibraryAPI.Controllers
             return Ok(member);
         }
 
+
+        // PUT: api/Members
         [Authorize(Roles = "Member")]
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutMember(string id, Member member, string? currentPassword = null)
+        [HttpPut("Me")]
+        public async Task<IActionResult> PutMember(Member member)
         {
-            if (id != member.Id)
+            var userName = User.FindFirstValue(ClaimTypes.Name);
+            if (userName == null)
             {
-                return BadRequest();
+                return Unauthorized("Kullanıcı adı talep bilgilerinde bulunamadı.");
             }
 
-            var user = await _userManager.FindByIdAsync(id);
-
+            var user = await _userManager.FindByNameAsync(userName);
             if (user == null)
             {
                 return NotFound();
             }
 
-            // Update user details
-            user.Address = member.ApplicationUser?.Address;
-            user.Email = member.ApplicationUser?.Email;
-            user.FamilyName = member.ApplicationUser?.FamilyName;
+            // Kullanıcı bilgilerini güncelle
+            if (!string.IsNullOrWhiteSpace(member.ApplicationUser!.Address))
+            {
+                user.Address = member.ApplicationUser.Address;
+            }
+
+            if (!string.IsNullOrWhiteSpace(member.ApplicationUser.FamilyName))
+            {
+                user.FamilyName = member.ApplicationUser.FamilyName;
+            }
+
+            if (!string.IsNullOrWhiteSpace(member.ApplicationUser.Name))
+            {
+                user.Name = member.ApplicationUser.Name; 
+            }
+            if (!string.IsNullOrWhiteSpace(member.ApplicationUser.UserName))
+            {
+                user.UserName = member.ApplicationUser.UserName;
+            }
+            if (!string.IsNullOrWhiteSpace(member.ApplicationUser.MiddleName))
+            {
+                user.MiddleName = member.ApplicationUser.MiddleName;
+            }
+            if (!string.IsNullOrWhiteSpace(member.ApplicationUser.Name))
+            {
+                user.Name = member.ApplicationUser.Name;
+            }
+            if (!string.IsNullOrWhiteSpace(member.ApplicationUser.Email))
+            {
+                user.Email = member.ApplicationUser.Email;
+            }
+            
 
             var updateResult = await _userManager.UpdateAsync(user);
             if (!updateResult.Succeeded)
             {
                 return BadRequest(updateResult.Errors);
-            }
-
-            if (currentPassword != null)
-            {
-                var passwordResult = await _userManager.ChangePasswordAsync(user, currentPassword, member.ApplicationUser?.Password);
-                if (!passwordResult.Succeeded)
-                {
-                    return BadRequest(passwordResult.Errors);
-                }
             }
 
             var memberFromDb = await _context.Members
@@ -108,7 +161,12 @@ namespace LibraryAPI.Controllers
                 return NotFound();
             }
 
-            memberFromDb.EducationalDegree = member.EducationalDegree;
+            
+            if (member.EducationalDegree != null)
+            {
+                memberFromDb.EducationalDegree = member.EducationalDegree;
+            }
+
 
             _context.Entry(memberFromDb).State = EntityState.Modified;
             _context.Entry(memberFromDb).Property(m => m.Id).IsModified = false;
@@ -119,7 +177,7 @@ namespace LibraryAPI.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!MemberExists(id))
+                if (!MemberExists(user.Id))
                 {
                     return NotFound();
                 }
@@ -132,6 +190,10 @@ namespace LibraryAPI.Controllers
             return NoContent();
         }
 
+
+
+        // POST: api/Members
+
         [HttpPost]
         public async Task<ActionResult<Member>> PostMember(Member member)
         {
@@ -140,18 +202,21 @@ namespace LibraryAPI.Controllers
                 return Problem("Entity set 'ApplicationContext.Members' is null.");
             }
 
+            // Yeni kullanıcı oluşturma
             var result = await _userManager.CreateAsync(member.ApplicationUser!, member.ApplicationUser!.Password);
             if (!result.Succeeded)
             {
                 return BadRequest(result.Errors);
             }
 
+            // Role atama
             var roleResult = await _userManager.AddToRoleAsync(member.ApplicationUser, "Member");
             if (!roleResult.Succeeded)
             {
                 return BadRequest(roleResult.Errors);
             }
 
+            // Member kaydını veritabanına ekleme
             member.Id = member.ApplicationUser!.Id;
             member.ApplicationUser = null;
             _context.Members.Add(member);
@@ -174,6 +239,7 @@ namespace LibraryAPI.Controllers
             return CreatedAtAction("GetMember", new { id = member.Id }, member);
         }
 
+        // DELETE: api/Members
         [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteMember(string id)
@@ -182,18 +248,19 @@ namespace LibraryAPI.Controllers
             {
                 return NotFound();
             }
-
-            var member = await _context.Members.FindAsync(id);
+            var member = await _userManager.FindByIdAsync(id);
             if (member == null)
             {
                 return NotFound();
             }
 
-            _context.Members.Remove(member);
+            member.IsActive = false;
             await _context.SaveChangesAsync();
 
             return NoContent();
         }
+
+
 
         private bool MemberExists(string id)
         {

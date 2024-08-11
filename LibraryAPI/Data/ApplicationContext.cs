@@ -44,7 +44,7 @@ namespace LibraryAPI.Data
 
 
         }
-        public DbSet<LibraryAPI.Models.Rezervation> Rezervation { get; set; } = default!;
+        
         public DbSet<LibraryAPI.Models.Borrow> Borrow { get; set; } = default!;
         public DbSet<LibraryAPI.Models.BookCopy> BookCopy { get; set; } = default!;
     }

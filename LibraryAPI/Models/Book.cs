@@ -27,6 +27,8 @@ namespace LibraryAPI.Models
         [JsonIgnore]
         public float Rating { get; set; }
 
+        public bool Status { get; set; } = true;
+
         public int PublisherId { get; set; }
 
         [StringLength(6, MinimumLength = 3)]

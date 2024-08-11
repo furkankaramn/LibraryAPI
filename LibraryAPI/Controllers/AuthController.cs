@@ -38,9 +38,16 @@ namespace LibraryAPI.Controllers
         public async Task<IActionResult> Login(string userName, string password)
         {
             var user = await _userManager.FindByNameAsync(userName);
+
             if (user == null || !(await _userManager.CheckPasswordAsync(user, password)))
             {
-                return Unauthorized();
+                return Unauthorized("Geçersiz kullanıcı adı veya şifre.");
+            }
+
+            // Kullanıcının IsActive durumunu kontrol et
+            if (!user.IsActive)
+            {
+                return Unauthorized("Bu kullanıcı devre dışı bırakılmıştır.");
             }
 
             var jwtSettings = _configuration.GetSection("JwtSettings");
@@ -52,11 +59,12 @@ namespace LibraryAPI.Controllers
             var userRoles = await _userManager.GetRolesAsync(user);
 
             var authClaims = new List<Claim>
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, user.UserName),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(ClaimTypes.NameIdentifier, user.Id)
-            };
+    {
+        new Claim(JwtRegisteredClaimNames.Sub, user.UserName),
+        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+        new Claim(ClaimTypes.NameIdentifier, user.Id),
+        new Claim(ClaimTypes.Name, user.UserName)
+    };
 
             foreach (var userRole in userRoles)
             {
@@ -79,6 +87,7 @@ namespace LibraryAPI.Controllers
                 expiration = token.ValidTo
             });
         }
+
 
         [Authorize]
         [HttpGet("Logout")]

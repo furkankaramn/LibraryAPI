@@ -30,6 +30,7 @@ namespace LibraryAPI.Controllers
         }
 
         // GET: api/SubCategories/5
+        [Authorize(Roles = "Worker,Admin")]
         [HttpGet("{id}")]
         public async Task<ActionResult<SubCategory>> GetSubCategory(short id)
         {
@@ -45,7 +46,7 @@ namespace LibraryAPI.Controllers
 
         // PUT: api/SubCategories/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [Authorize(Roles = "Worker")]
+        [Authorize(Roles = "Worker,Admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutSubCategory(short id, SubCategory subCategory)
         {
@@ -77,7 +78,7 @@ namespace LibraryAPI.Controllers
 
         // POST: api/SubCategories
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [Authorize(Roles = "Worker")]
+        [Authorize(Roles = "Worker,Admin")]
         [HttpPost]
         public async Task<ActionResult<SubCategory>> PostSubCategory(SubCategory subCategory)
         {
@@ -88,6 +89,7 @@ namespace LibraryAPI.Controllers
         }
 
         // DELETE: api/SubCategories/5
+        [Authorize(Roles = "Worker,Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteSubCategory(short id)
         {

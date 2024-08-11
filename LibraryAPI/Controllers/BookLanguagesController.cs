@@ -23,6 +23,7 @@ namespace LibraryAPI.Controllers
         }
 
         // GET: api/BookLanguages
+        [Authorize(Roles = "Worker,Admin")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<BookLanguage>>> GetBookLanguage()
         {
@@ -30,6 +31,7 @@ namespace LibraryAPI.Controllers
         }
 
         // GET: api/BookLanguages/5
+        [Authorize(Roles = "Worker,Admin")]
         [HttpGet("{id}")]
         public async Task<ActionResult<BookLanguage>> GetBookLanguage(string id)
         {
@@ -45,7 +47,7 @@ namespace LibraryAPI.Controllers
 
         // PUT: api/BookLanguages/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [Authorize(Roles = "Worker")]
+        [Authorize(Roles = "Worker,Admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutBookLanguage(string id, BookLanguage bookLanguage)
         {
@@ -77,7 +79,7 @@ namespace LibraryAPI.Controllers
 
         // POST: api/BookLanguages
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [Authorize(Roles = "Worker")]
+        [Authorize(Roles = "Worker,Admin")]
         [HttpPost]
         public async Task<ActionResult<BookLanguage>> PostBookLanguage(BookLanguage bookLanguage)
         {
@@ -102,6 +104,7 @@ namespace LibraryAPI.Controllers
         }
 
         // DELETE: api/BookLanguages/5
+        [Authorize(Roles = "Worker,Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteBookLanguage(string id)
         {

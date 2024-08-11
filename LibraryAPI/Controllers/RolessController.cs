@@ -1,6 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 
 namespace LibraryAPI.Controllers
 {
@@ -16,16 +15,19 @@ namespace LibraryAPI.Controllers
         }
 
         [HttpPost]
-        public void CreateRoles()
+        public async Task<IActionResult> CreateRoles()
         {
-            IdentityRole identityRole = new IdentityRole("Member");
+            var roles = new[] { "Member", "Worker", "Admin" };
 
-            _roleManager.CreateAsync(identityRole).Wait();
+            foreach (var role in roles)
+            {
+                if (!await _roleManager.RoleExistsAsync(role))
+                {
+                    await _roleManager.CreateAsync(new IdentityRole(role));
+                }
+            }
 
-            identityRole = new IdentityRole("Worker");
-            _roleManager.CreateAsync(identityRole).Wait();
-            identityRole = new IdentityRole("Admin");
-            _roleManager.CreateAsync(identityRole).Wait();
+            return Ok();
         }
     }
 }

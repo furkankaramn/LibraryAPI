@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using LibraryAPI.Data;
 using LibraryAPI.Models;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace LibraryAPI.Controllers
 {
@@ -22,6 +24,7 @@ namespace LibraryAPI.Controllers
         }
 
         // GET: api/Borrows
+        [Authorize(Roles = "Worker,Admin")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Borrow>>> GetBorrow()
         {
@@ -29,6 +32,7 @@ namespace LibraryAPI.Controllers
         }
 
         // GET: api/Borrows/5
+        [Authorize(Roles = "Worker,Admin")]
         [HttpGet("{id}")]
         public async Task<ActionResult<Borrow>> GetBorrow(long id)
         {
@@ -43,6 +47,7 @@ namespace LibraryAPI.Controllers
         }
 
         // PUT: api/Borrows/5
+        [Authorize(Roles = "Worker,Admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutBorrow(long id, Borrow borrow)
         {
@@ -141,23 +146,35 @@ namespace LibraryAPI.Controllers
             return NoContent();
         }
 
-        
+
 
 
         // POST: api/Borrows
+        [Authorize(Roles = "Worker,Admin")]
         [HttpPost]
         public async Task<ActionResult<Borrow>> PostBorrow(Borrow borrow)
         {
+            var userName = User.FindFirstValue(ClaimTypes.Name);
+            var employee = await _context.Employees
+                                         .FirstOrDefaultAsync(e => e.ApplicationUser.UserName == userName);
+
+            if (employee == null)
+            {
+                return Unauthorized("Employee not found.");
+            }
+
+            borrow.EmployeesId = employee.Id;
+
             var member = await _context.Members.FindAsync(borrow.MembersId);
             if (member == null)
             {
-                return BadRequest("Member not found");
+                return BadRequest("Member not found.");
             }
 
             var bookCopy = await _context.BookCopy.FindAsync(borrow.BookCopiesId);
             if (bookCopy == null)
             {
-                return BadRequest("Invalid BookCopiesId");
+                return BadRequest("Invalid BookCopiesId.");
             }
 
             if (!bookCopy.IsAvailable)
@@ -182,6 +199,7 @@ namespace LibraryAPI.Controllers
 
 
         // DELETE: api/Borrows/5
+        [Authorize(Roles = "Worker,Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteBorrow(long id)
         {

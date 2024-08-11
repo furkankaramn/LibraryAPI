@@ -23,6 +23,7 @@ namespace LibraryAPI.Controllers
         }
 
         // GET: api/Languages
+        
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Language>>> GetLanguages()
         {
@@ -30,6 +31,7 @@ namespace LibraryAPI.Controllers
         }
 
         // GET: api/Languages/5
+        [Authorize(Roles = "Worker,Admin")]
         [HttpGet("{id}")]
         public async Task<ActionResult<Language>> GetLanguage(string id)
         {
@@ -45,7 +47,7 @@ namespace LibraryAPI.Controllers
 
         // PUT: api/Languages/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [Authorize(Roles = "Worker")]
+        [Authorize(Roles = "Worker,Admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutLanguage(string id, Language language)
         {
@@ -77,7 +79,7 @@ namespace LibraryAPI.Controllers
 
         // POST: api/Languages
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [Authorize(Roles = "Worker")]
+        [Authorize(Roles = "Worker,Admin")]
         [HttpPost]
         public async Task<ActionResult<Language>> PostLanguage(Language language)
         {
@@ -102,6 +104,7 @@ namespace LibraryAPI.Controllers
         }
 
         // DELETE: api/Languages/5
+        [Authorize(Roles = "Worker,Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteLanguage(string id)
         {

@@ -1069,6 +1069,26 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "LibraryAPI.Controllers.EmployeesController",
+    "Method": "GetEmployee",
+    "RelativePath": "api/Employees/Me",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "LibraryAPI.Models.Employee",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
     "ContainingType": "LibraryAPI.Controllers.LanguagesController",
     "Method": "GetLanguages",
     "RelativePath": "api/Languages",
@@ -1334,9 +1354,9 @@
   },
   {
     "ContainingType": "LibraryAPI.Controllers.MembersController",
-    "Method": "PutMember",
+    "Method": "GetMember",
     "RelativePath": "api/Members/{id}",
-    "HttpMethod": "PUT",
+    "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
     "Parameters": [
@@ -1344,19 +1364,19 @@
         "Name": "id",
         "Type": "System.String",
         "IsRequired": true
-      },
-      {
-        "Name": "member",
-        "Type": "LibraryAPI.Models.Member",
-        "IsRequired": true
-      },
-      {
-        "Name": "currentPassword",
-        "Type": "System.String",
-        "IsRequired": false
       }
     ],
-    "ReturnTypes": []
+    "ReturnTypes": [
+      {
+        "Type": "LibraryAPI.Models.Member",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
   },
   {
     "ContainingType": "LibraryAPI.Controllers.MembersController",
@@ -1376,7 +1396,7 @@
   },
   {
     "ContainingType": "LibraryAPI.Controllers.MembersController",
-    "Method": "GetMember",
+    "Method": "Getmember",
     "RelativePath": "api/Members/Me",
     "HttpMethod": "GET",
     "IsController": true,
@@ -1393,6 +1413,22 @@
         "StatusCode": 200
       }
     ]
+  },
+  {
+    "ContainingType": "LibraryAPI.Controllers.MembersController",
+    "Method": "PutMember",
+    "RelativePath": "api/Members/Me",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "member",
+        "Type": "LibraryAPI.Models.Member",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
   },
   {
     "ContainingType": "LibraryAPI.Controllers.PublishersController",
@@ -1504,115 +1540,6 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "LibraryAPI.Controllers.RezervationsController",
-    "Method": "GetRezervation",
-    "RelativePath": "api/Rezervations",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [],
-    "ReturnTypes": [
-      {
-        "Type": "System.Collections.Generic.IEnumerable\u00601[[LibraryAPI.Models.Rezervation, LibraryAPI, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
-        "MediaTypes": [
-          "text/plain",
-          "application/json",
-          "text/json"
-        ],
-        "StatusCode": 200
-      }
-    ]
-  },
-  {
-    "ContainingType": "LibraryAPI.Controllers.RezervationsController",
-    "Method": "PostRezervation",
-    "RelativePath": "api/Rezervations",
-    "HttpMethod": "POST",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "rezervation",
-        "Type": "LibraryAPI.Models.Rezervation",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": [
-      {
-        "Type": "LibraryAPI.Models.Rezervation",
-        "MediaTypes": [
-          "text/plain",
-          "application/json",
-          "text/json"
-        ],
-        "StatusCode": 200
-      }
-    ]
-  },
-  {
-    "ContainingType": "LibraryAPI.Controllers.RezervationsController",
-    "Method": "GetRezervation",
-    "RelativePath": "api/Rezervations/{id}",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.Int64",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": [
-      {
-        "Type": "LibraryAPI.Models.Rezervation",
-        "MediaTypes": [
-          "text/plain",
-          "application/json",
-          "text/json"
-        ],
-        "StatusCode": 200
-      }
-    ]
-  },
-  {
-    "ContainingType": "LibraryAPI.Controllers.RezervationsController",
-    "Method": "PutRezervation",
-    "RelativePath": "api/Rezervations/{id}",
-    "HttpMethod": "PUT",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.Int64",
-        "IsRequired": true
-      },
-      {
-        "Name": "rezervation",
-        "Type": "LibraryAPI.Models.Rezervation",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "LibraryAPI.Controllers.RezervationsController",
-    "Method": "DeleteRezervation",
-    "RelativePath": "api/Rezervations/{id}",
-    "HttpMethod": "DELETE",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.Int64",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
     "ContainingType": "LibraryAPI.Controllers.RolessController",
     "Method": "CreateRoles",
     "RelativePath": "api/Roless",
@@ -1620,13 +1547,7 @@
     "IsController": true,
     "Order": 0,
     "Parameters": [],
-    "ReturnTypes": [
-      {
-        "Type": "System.Void",
-        "MediaTypes": [],
-        "StatusCode": 200
-      }
-    ]
+    "ReturnTypes": []
   },
   {
     "ContainingType": "LibraryAPI.Controllers.SubCategoriesController",

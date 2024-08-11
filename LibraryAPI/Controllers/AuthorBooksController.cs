@@ -23,6 +23,7 @@ namespace LibraryAPI.Controllers
         }
 
         // GET: api/AuthorBooks
+        [Authorize(Roles = "Worker,Admin")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<AuthorBook>>> GetAuthorBook()
         {
@@ -30,6 +31,7 @@ namespace LibraryAPI.Controllers
         }
 
         // GET: api/AuthorBooks/5
+        [Authorize(Roles = "Worker,Admin")]
         [HttpGet("{id}")]
         public async Task<ActionResult<AuthorBook>> GetAuthorBook(long id)
         {
@@ -45,7 +47,7 @@ namespace LibraryAPI.Controllers
 
         // PUT: api/AuthorBooks/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [Authorize(Roles = "Worker")]
+        [Authorize(Roles = "Worker,Admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutAuthorBook(long id, AuthorBook authorBook)
         {
@@ -77,7 +79,7 @@ namespace LibraryAPI.Controllers
 
         // POST: api/AuthorBooks
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [Authorize(Roles = "Worker")]
+        [Authorize(Roles = "Worker,Admin")]
         [HttpPost]
         public async Task<ActionResult<AuthorBook>> PostAuthorBook(AuthorBook authorBook)
         {
@@ -102,6 +104,7 @@ namespace LibraryAPI.Controllers
         }
 
         // DELETE: api/AuthorBooks/5
+        [Authorize(Roles = "Worker,Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAuthorBook(long id)
         {

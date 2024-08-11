@@ -23,6 +23,7 @@ namespace LibraryAPI.Controllers
         }
 
         // GET: api/Authors
+        [Authorize(Roles = "Worker,Admin")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Author>>> GetAuthors()
         {
@@ -30,6 +31,7 @@ namespace LibraryAPI.Controllers
         }
 
         // GET: api/Authors/5
+        [Authorize(Roles = "Worker,Admin")]
         [HttpGet("{id}")]
         public async Task<ActionResult<Author>> GetAuthor(long id)
         {
@@ -45,7 +47,7 @@ namespace LibraryAPI.Controllers
 
         // PUT: api/Authors/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [Authorize(Roles = "Worker")]
+        [Authorize(Roles = "Worker,Admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutAuthor(long id, Author author)
         {
@@ -77,7 +79,7 @@ namespace LibraryAPI.Controllers
 
         // POST: api/Authors
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [Authorize(Roles = "Worker")]
+        [Authorize(Roles = "Worker,Admin")]
         [HttpPost]
         public async Task<ActionResult<Author>> PostAuthor(Author author)
         {
@@ -88,6 +90,7 @@ namespace LibraryAPI.Controllers
         }
 
         // DELETE: api/Authors/5
+        [Authorize(Roles = "Worker,Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAuthor(long id)
         {

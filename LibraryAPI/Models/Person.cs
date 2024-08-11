@@ -22,6 +22,8 @@ namespace LibraryAPI.Models
         [NotMapped]
         [Compare(nameof(Password))]
         public string? ConfirmPassword { get; set; }
+
+        public bool IsActive { get; set; } = true;
     }
     public class Member
     {

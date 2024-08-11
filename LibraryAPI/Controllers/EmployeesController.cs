@@ -1,12 +1,19 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using LibraryAPI.Data;
 using LibraryAPI.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+using Microsoft.IdentityModel.Tokens;
+using System.Configuration;
+using System.IdentityModel.Tokens.Jwt;
+using System.Text;
 
 namespace LibraryAPI.Controllers
 {
@@ -14,15 +21,20 @@ namespace LibraryAPI.Controllers
     [ApiController]
     public class EmployeesController : ControllerBase
     {
+        private readonly IConfiguration _configuration;
         private readonly ApplicationContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly SignInManager<ApplicationUser> _signInManager;
 
-        public EmployeesController(ApplicationContext context, UserManager<ApplicationUser> userManager)
+        public EmployeesController(ApplicationContext context, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration)
         {
             _context = context;
             _userManager = userManager;
+            _signInManager = signInManager;
+            _configuration = configuration;
         }
 
+        // GET: api/Employees
         [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Employee>>> GetEmployees()
@@ -31,14 +43,15 @@ namespace LibraryAPI.Controllers
             {
                 return NotFound();
             }
-            var employees = await _context.Employees
-                                          .Include(m => m.ApplicationUser)
-                                          .ToListAsync();
+            var employee = await _context.Employees
+                                        .Include(m => m.ApplicationUser)
+                                        .ToListAsync();
 
-            return Ok(employees);
+            return Ok(employee);
         }
 
-        [Authorize(Roles = "Worker")]
+        // GET: api/Employees/5
+        [Authorize(Roles = "Admin")]
         [HttpGet("{id}")]
         public async Task<ActionResult<Employee>> GetEmployee(string id)
         {
@@ -47,8 +60,8 @@ namespace LibraryAPI.Controllers
                 return NotFound();
             }
             var employee = await _context.Employees
-                                          .Include(m => m.ApplicationUser)
-                                          .FirstOrDefaultAsync(m => m.Id == id);
+                                       .Include(m => m.ApplicationUser)
+                                       .FirstOrDefaultAsync(m => m.Id == id);
 
             if (employee == null)
             {
@@ -57,7 +70,30 @@ namespace LibraryAPI.Controllers
 
             return employee;
         }
+        [Authorize(Roles = "Worker")]
+        [HttpGet("Me")]
+        public async Task<ActionResult<Employee>> GetEmployee()
+        {
+            var userName = User.FindFirstValue(ClaimTypes.Name);
 
+            if (userName == null)
+            {
+                return Unauthorized("Kullanıcı adı talep bilgilerinde bulunamadı.");
+            }
+
+            var employee = await _context.Employees
+                                       .Include(m => m.ApplicationUser)
+                                       .FirstOrDefaultAsync(m => m.ApplicationUser.UserName == userName);
+
+            if (employee == null)
+            {
+                return NotFound($"Kullanıcı adı {userName} olan üye bulunamadı.");
+            }
+
+            return Ok(employee);
+        }
+
+        // PUT: api/Employees/5
         [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutEmployee(string id, Employee employee, string? currentPassword = null)
@@ -67,19 +103,45 @@ namespace LibraryAPI.Controllers
                 return BadRequest();
             }
 
-            var applicationUser = await _userManager.FindByIdAsync(id);
+            var user = await _userManager.FindByIdAsync(id);
 
-            if (applicationUser == null)
+            if (user == null)
             {
                 return NotFound();
             }
 
-            applicationUser.Address = employee.ApplicationUser!.Address;
-            applicationUser.BirthDate = employee.ApplicationUser!.BirthDate;
-            applicationUser.Email = employee.ApplicationUser!.Email;
-            // ...
+            // Kullanıcı bilgilerini güncelle
+            if (!string.IsNullOrWhiteSpace(employee.ApplicationUser!.Address))
+            {
+                user.Address = employee.ApplicationUser.Address;
+            }
 
-            var updateResult = await _userManager.UpdateAsync(applicationUser);
+            if (!string.IsNullOrWhiteSpace(employee.ApplicationUser.FamilyName))
+            {
+                user.FamilyName = employee.ApplicationUser.FamilyName;
+            }
+
+            if (!string.IsNullOrWhiteSpace(employee.ApplicationUser.Name))
+            {
+                user.Name = employee.ApplicationUser.Name;
+            }
+
+            if (!string.IsNullOrWhiteSpace(employee.ApplicationUser.UserName))
+            {
+                user.UserName = employee.ApplicationUser.UserName;
+            }
+
+            if (!string.IsNullOrWhiteSpace(employee.ApplicationUser.MiddleName))
+            {
+                user.MiddleName = employee.ApplicationUser.MiddleName;
+            }
+
+            if (!string.IsNullOrWhiteSpace(employee.ApplicationUser.Email))
+            {
+                user.Email = employee.ApplicationUser.Email;
+            }
+
+            var updateResult = await _userManager.UpdateAsync(user);
             if (!updateResult.Succeeded)
             {
                 return BadRequest(updateResult.Errors);
@@ -87,31 +149,35 @@ namespace LibraryAPI.Controllers
 
             if (currentPassword != null)
             {
-                var passwordResult = await _userManager.ChangePasswordAsync(applicationUser, currentPassword, employee.ApplicationUser?.Password);
+                var passwordResult = await _userManager.ChangePasswordAsync(user, currentPassword, employee.ApplicationUser.Password);
                 if (!passwordResult.Succeeded)
                 {
                     return BadRequest(passwordResult.Errors);
                 }
             }
 
-            var currentRoles = await _userManager.GetRolesAsync(applicationUser);
-            await _userManager.RemoveFromRolesAsync(applicationUser, currentRoles);
+            var employeeFromDb = await _context.Employees
+                                               .Include(e => e.ApplicationUser)
+                                               .FirstOrDefaultAsync(e => e.Id == user.Id);
 
-            string role = employee.Title.ToLower() switch
+            if (employeeFromDb == null)
             {
-                "admin" => "Admin",
-                "worker" => "Worker",
-                _ => "Worker"
-            };
-
-            var roleResult = await _userManager.AddToRoleAsync(applicationUser, role);
-            if (!roleResult.Succeeded)
-            {
-                return BadRequest(roleResult.Errors);
+                return NotFound();
             }
 
-            employee.ApplicationUser = null;
-            _context.Entry(employee).State = EntityState.Modified;
+            // Employee spesifik alanları güncelle
+            if (!string.IsNullOrWhiteSpace(employee.Title))
+            {
+                employeeFromDb.Title = employee.Title;
+            }
+
+            if (!string.IsNullOrWhiteSpace(employee.Department))
+            {
+                employeeFromDb.Department = employee.Department;
+            }
+
+            _context.Entry(employeeFromDb).State = EntityState.Modified;
+            _context.Entry(employeeFromDb).Property(e => e.Id).IsModified = false;
 
             try
             {
@@ -132,6 +198,7 @@ namespace LibraryAPI.Controllers
             return NoContent();
         }
 
+        // POST: api/Employees
         [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<ActionResult<Employee>> PostEmployee(Employee employee)
@@ -141,29 +208,24 @@ namespace LibraryAPI.Controllers
                 return Problem("Entity set 'ApplicationContext.Employees' is null.");
             }
 
+            // Yeni kullanıcı oluşturma
             var result = await _userManager.CreateAsync(employee.ApplicationUser!, employee.ApplicationUser!.Password);
             if (!result.Succeeded)
             {
                 return BadRequest(result.Errors);
             }
 
-            string role = employee.Title.ToLower() switch
-            {
-                "admin" => "Admin",
-                "worker" => "Worker",
-                _ => "Worker"
-            };
-
-            var roleResult = await _userManager.AddToRoleAsync(employee.ApplicationUser, role);
+            // Role atama
+            var roleResult = await _userManager.AddToRoleAsync(employee.ApplicationUser, "Worker");
             if (!roleResult.Succeeded)
             {
                 return BadRequest(roleResult.Errors);
             }
 
+            // Employee kaydını veritabanına ekleme
             employee.Id = employee.ApplicationUser!.Id;
             employee.ApplicationUser = null;
             _context.Employees.Add(employee);
-
             try
             {
                 await _context.SaveChangesAsync();
@@ -183,6 +245,7 @@ namespace LibraryAPI.Controllers
             return CreatedAtAction("GetEmployee", new { id = employee.Id }, employee);
         }
 
+        // DELETE: api/Employees/5
         [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteEmployee(string id)
@@ -191,14 +254,13 @@ namespace LibraryAPI.Controllers
             {
                 return NotFound();
             }
-
-            var employee = await _context.Employees.FindAsync(id);
+            var employee = await _userManager.FindByIdAsync(id);
             if (employee == null)
             {
                 return NotFound();
             }
 
-            _context.Employees.Remove(employee);
+            employee.IsActive = false;
             await _context.SaveChangesAsync();
 
             return NoContent();

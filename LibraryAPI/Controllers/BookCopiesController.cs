@@ -23,6 +23,7 @@ namespace LibraryAPI.Controllers
         }
 
         // GET: api/BookCopies
+        [Authorize(Roles = "Worker,Admin")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<BookCopy>>> GetBookCopy()
         {
@@ -30,6 +31,7 @@ namespace LibraryAPI.Controllers
         }
 
         // GET: api/BookCopies/5
+        [Authorize(Roles = "Worker,Admin")]
         [HttpGet("{id}")]
         public async Task<ActionResult<BookCopy>> GetBookCopy(int id)
         {
@@ -45,7 +47,7 @@ namespace LibraryAPI.Controllers
 
         // PUT: api/BookCopies/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [Authorize(Roles = "Worker")]
+        [Authorize(Roles = "Worker,Admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutBookCopy(int id, BookCopy bookCopy)
         {
@@ -77,7 +79,7 @@ namespace LibraryAPI.Controllers
 
         // POST: api/BookCopies
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [Authorize(Roles = "Worker")]
+        [Authorize(Roles = "Worker,Admin")]
         [HttpPost]
         public async Task<ActionResult<BookCopy>> PostBookCopy(BookCopy bookCopy)
         {
@@ -94,6 +96,7 @@ namespace LibraryAPI.Controllers
         }
 
         // DELETE: api/BookCopies/5
+        [Authorize(Roles = "Worker,Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteBookCopy(int id)
         {

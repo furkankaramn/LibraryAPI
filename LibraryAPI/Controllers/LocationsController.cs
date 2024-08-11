@@ -30,6 +30,7 @@ namespace LibraryAPI.Controllers
         }
 
         // GET: api/Locations/5
+        [Authorize(Roles = "Worker,Admin")]
         [HttpGet("{id}")]
         public async Task<ActionResult<Location>> GetLocation(string id)
         {
@@ -45,7 +46,7 @@ namespace LibraryAPI.Controllers
 
         // PUT: api/Locations/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [Authorize(Roles = "Worker")]
+        [Authorize(Roles = "Worker,Admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutLocation(string id, Location location)
         {
@@ -77,7 +78,7 @@ namespace LibraryAPI.Controllers
 
         // POST: api/Locations
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [Authorize(Roles = "Worker")]
+        [Authorize(Roles = "Worker,Admin")]
         [HttpPost]
         public async Task<ActionResult<Location>> PostLocation(Location location)
         {
@@ -102,6 +103,7 @@ namespace LibraryAPI.Controllers
         }
 
         // DELETE: api/Locations/5
+        [Authorize(Roles = "Worker,Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteLocation(string id)
         {

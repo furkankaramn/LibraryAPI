@@ -30,6 +30,7 @@ namespace LibraryAPI.Controllers
         }
 
         // GET: api/Books/5
+        [Authorize(Roles = "Worker,Admin")]
         [HttpGet("{id}")]
         public async Task<ActionResult<Book>> GetBook(int id)
         {
@@ -45,7 +46,7 @@ namespace LibraryAPI.Controllers
 
         // PUT: api/Books/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [Authorize(Roles = "Worker")]
+        [Authorize(Roles = "Worker,Admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutBook(int id, Book book)
         {
@@ -77,7 +78,7 @@ namespace LibraryAPI.Controllers
 
         // POST: api/Books
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [Authorize(Roles = "Worker")]
+        [Authorize(Roles = "Worker,Admin")]
         [HttpPost]
         public async Task<ActionResult<Book>> PostBook(Book book)
         {
@@ -88,16 +89,22 @@ namespace LibraryAPI.Controllers
         }
 
         // DELETE: api/Books/5
+        [Authorize(Roles = "Worker,Admin")]
         [HttpDelete("{id}")]
+        
         public async Task<IActionResult> DeleteBook(int id)
         {
+            if (_context.Books == null)
+            {
+                return NotFound();
+            }
             var book = await _context.Books.FindAsync(id);
             if (book == null)
             {
                 return NotFound();
             }
 
-            _context.Books.Remove(book);
+            book.Status = false;
             await _context.SaveChangesAsync();
 
             return NoContent();
